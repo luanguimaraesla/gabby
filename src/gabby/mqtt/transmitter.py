@@ -1,5 +1,8 @@
+import logging
 import paho.mqtt.client as mqtt
+
 from . import URL, PORT, KEEPALIVE
+from ..messager.message import Message
 
 class Transmitter(mqtt.Client):
     """
@@ -18,6 +21,7 @@ class Transmitter(mqtt.Client):
             keepalive or KEEPALIVE
         )
 
+    @staticmethod
     def on_connect(self, userdata, flags, rc):
         """
         The callback for when the client receives a CONNACK response
@@ -25,7 +29,7 @@ class Transmitter(mqtt.Client):
         """
         logging.info(f'Connected with MQTT Server: (code) {rc}')
 
-    def send(self, message, encode_message):
+    def send(self, message):
         """
         Publish string to the 2RSystem queue
 
@@ -36,13 +40,9 @@ class Transmitter(mqtt.Client):
                 topic name
         """
         receivers = []
-        if encode_message:
-            receivers = filter(
-                lambda x: x.name == message.to,
-                self.output_topics
-            )
-        receivers = receivers or self.output_topics
+        if isinstance(message, Message):
+            receivers = message.filter_topics(self.output_topics)
 
         for topic in map(lambda x: x.topic, receivers):
-            logging.info(f'Publishing on topic {self.topics}')
-            self.publish(topic, message)
+            logging.info(f'Publishing on topic {topic}')
+            self.publish(topic, message.encoded)

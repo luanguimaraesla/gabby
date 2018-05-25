@@ -5,7 +5,6 @@ import logging
 import paho.mqtt.client as mqtt
 
 from . import URL, PORT, KEEPALIVE
-from ..messager.decorators import decode_message
 
 
 class Receiver(mqtt.Client):
@@ -16,13 +15,18 @@ class Receiver(mqtt.Client):
         topics (list):
             list of strings with the topic names
 
-        processor (Processor):
-            processor for received message
+        url (str):
+            mqtt server url
+
+        port (int):
+            mqtt server port
+
+        keepalive (int):
+            mqtt keepalive time in seconds
     """
     def __init__(self, topics=[], url=None, port=None, keepalive=None):
         super().__init__()
         self.input_topics = topics
-        self.processor = processor
 
         self.connect(
             url or URL,

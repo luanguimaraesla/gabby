@@ -3,7 +3,7 @@ import logging
 
 from .message import Message
 
-def decode(message, fmt):
+def decode(message, topics):
     """
     Convert an MQTTMessage to a Message
 
@@ -11,6 +11,6 @@ def decode(message, fmt):
         message (MQTTMessage):
             A paho.mqtt.MQTTMessage received from any message queue
     """
-    data = struct.unpack(fmt, message.payload)
+    data = struct.unpack(topics[0].fmt, message.payload)
     logging.debug(f'Decoded data: {data}')
-    return Message(data)
+    return Message(data, topics)
