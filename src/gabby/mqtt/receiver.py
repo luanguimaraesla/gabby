@@ -63,7 +63,7 @@ class Receiver(mqtt.Client):
         """
         self.running = True
         while self.running:
-            self.client.loop()
+            self.loop()
 
     def listen(self, topics):
         """
@@ -75,10 +75,10 @@ class Receiver(mqtt.Client):
         """
         for topic in map(lambda x: x.topic, topics):
             try:
-                self.client.subscribe(topic.topic)
-                logging.debug(f'Subscribed the {topic.topic} topic')
+                self.subscribe(topic)
+                logging.debug(f'Subscribed the {topic} topic')
             except:
-                logging.debug(f"Can't subscribe the {topic.topic} topic")
+                logging.debug(f"Can't subscribe the {topic} topic")
 
     def stop(self):
         """
