@@ -28,11 +28,18 @@ class Receiver(mqtt.Client):
         super().__init__()
         self.input_topics = topics
 
-        self.connect(
-            url or URL,
-            port or PORT,
-            keepalive or KEEPALIVE
-        )
+        try:
+            getattr(self, "connected")
+        except AttributeError:
+           self.connected = False
+        finally:
+            if not self.connected:
+                self.connect(
+                    url or URL,
+                    port or PORT,
+                    keepalive or KEEPALIVE
+                )
+                self.connected = True
 
     @staticmethod  # decorator to avoid double 'self' on paho callback
     def on_connect(self, userdata, flags, rc):
@@ -41,14 +48,13 @@ class Receiver(mqtt.Client):
         from the server.
         """
         logging.info(f'Connected with Mosquitto Server: (code) {rc}')
-        logging.debug(f'Listen to {map(lambda x: x.name, self.input_topics)}')
-        self.listen(self.input_topics)
 
     @staticmethod  # decorator to avoid double 'self' on paho callback
     def on_message(self, userdata, message):
         """
         The callback for when a PUBLISH message is received from the server.
         """
+        logging.debug(f"Message arrived from {message.topic}")
         self.process(userdata, message)
 
     def process(self, userdata, message):
@@ -62,6 +68,8 @@ class Receiver(mqtt.Client):
         and a manual interface.
         """
         self.running = True
+        self.listen(self.input_topics)
+        logging.info('Getting into the listening loop')
         while self.running:
             self.loop()
 
@@ -73,6 +81,8 @@ class Receiver(mqtt.Client):
             topics (list):
                 list of topics to subscribe the mqtt listener
         """
+        logging.debug(f'Listen to {list(map(lambda x: x.name, topics))}')
+
         for topic in map(lambda x: x.topic, topics):
             try:
                 self.subscribe(topic)

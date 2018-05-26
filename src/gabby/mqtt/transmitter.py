@@ -15,11 +15,19 @@ class Transmitter(mqtt.Client):
     """
     def __init__(self, topics, url=None, port=None, keepalive=None):
         self.output_topics = topics
-        self.connect(
-            url or URL,
-            port or PORT,
-            keepalive or KEEPALIVE
-        )
+
+        try:
+            getattr(self, "connected")
+        except AttributeError:
+           self.connected = False
+        finally:
+            if not self.connected:
+                self.connect(
+                    url or URL,
+                    port or PORT,
+                    keepalive or KEEPALIVE
+                )
+                self.connected = True
 
     @staticmethod
     def on_connect(self, userdata, flags, rc):
@@ -42,6 +50,8 @@ class Transmitter(mqtt.Client):
         receivers = []
         if isinstance(message, Message):
             receivers = message.filter_topics(self.output_topics)
+
+        logging.debug(f"Sending message to {receivers}")
 
         for topic in map(lambda x: x.topic, receivers):
             logging.info(f'Publishing on topic {topic}')

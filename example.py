@@ -1,15 +1,27 @@
 import sys
+import logging
 from src.gabby.gabby import Gabby, Topic
 from src.gabby.controller import Controller
 
+
 class LoggerGabby(Gabby):
     def transform(self, message):
-        print("CHEGOU", file=sys.stderr)
-        print(f"Data: {message.data}", file=sys.stderr)
-        exit(1)
+        logging.debug(f"ARRIVED! Data: {message.data}")
         return []
 
+
+def setup_logging(level):
+    """
+    Setup logging level
+    """
+    logging.basicConfig(
+        format='%(levelname)s: %(message)s',
+        level=getattr(logging, level.upper())
+    )
+
+
 if __name__ == "__main__":
+    setup_logging('debug')
     controller = Controller()
 
     topic_A = Topic('A', 'queue/a', 'i')
