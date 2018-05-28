@@ -5,6 +5,7 @@ Module to handle message serialization
 import logging
 import struct
 
+
 class Message:
     """
     Handler for struct encoding data

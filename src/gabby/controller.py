@@ -11,7 +11,7 @@ class Controller:
         """
         Singleton implementation
         """
-        if Controller._instance == None:
+        if Controller._instance is None:
             obj = object.__new__(cls)
             Controller._instance = obj
             Controller._instance.gabbies = []
@@ -33,7 +33,6 @@ class Controller:
             proc.join()
 
         logging.info("[Success] Shutted down")
-
 
     def _run_instance(self, gabby):
         """

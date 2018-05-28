@@ -3,6 +3,7 @@ import logging
 
 from .message import Message
 
+
 def decode(message, topics):
     """
     Convert an MQTTMessage to a Message

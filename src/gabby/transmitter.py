@@ -1,8 +1,9 @@
 import logging
 import paho.mqtt.client as mqtt
 
-from . import URL, PORT, KEEPALIVE
-from ..messager.message import Message
+from .message import Message
+from .decorators import ensure_connection
+
 
 class Transmitter(mqtt.Client):
     """
@@ -15,19 +16,9 @@ class Transmitter(mqtt.Client):
     """
     def __init__(self, topics, url=None, port=None, keepalive=None):
         self.output_topics = topics
-
-        try:
-            getattr(self, "connected")
-        except AttributeError:
-           self.connected = False
-        finally:
-            if not self.connected:
-                self.connect(
-                    url or URL,
-                    port or PORT,
-                    keepalive or KEEPALIVE
-                )
-                self.connected = True
+        self.url = url
+        self.port = port
+        self.keepalive = keepalive
 
     @staticmethod
     def on_connect(self, userdata, flags, rc):
@@ -37,6 +28,14 @@ class Transmitter(mqtt.Client):
         """
         logging.info(f'Connected with MQTT Server: (code) {rc}')
 
+    @staticmethod
+    def on_disconnect(self, userdata, rc):
+        """
+        Called when the client disconnects from the broker.
+        """
+        self.connected = False
+
+    @ensure_connection
     def send(self, message):
         """
         Publish string to the 2RSystem queue
@@ -53,6 +52,6 @@ class Transmitter(mqtt.Client):
 
         logging.debug(f"Sending message to {receivers}")
 
-        for topic in map(lambda x: x.topic, receivers):
+        for topic in map(lambda x: x.name, receivers):
             logging.info(f'Publishing on topic {topic}')
             self.publish(topic, message.encoded)

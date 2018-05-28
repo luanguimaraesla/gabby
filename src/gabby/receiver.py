@@ -4,7 +4,7 @@ Tools to encapsulate generic receive connectors
 import logging
 import paho.mqtt.client as mqtt
 
-from . import URL, PORT, KEEPALIVE
+from .decorators import ensure_connection
 
 
 class Receiver(mqtt.Client):
@@ -27,19 +27,9 @@ class Receiver(mqtt.Client):
     def __init__(self, topics=[], url=None, port=None, keepalive=None):
         super().__init__()
         self.input_topics = topics
-
-        try:
-            getattr(self, "connected")
-        except AttributeError:
-           self.connected = False
-        finally:
-            if not self.connected:
-                self.connect(
-                    url or URL,
-                    port or PORT,
-                    keepalive or KEEPALIVE
-                )
-                self.connected = True
+        self.url = url
+        self.port = port
+        self.keepalive = keepalive
 
     @staticmethod  # decorator to avoid double 'self' on paho callback
     def on_connect(self, userdata, flags, rc):
@@ -67,12 +57,14 @@ class Receiver(mqtt.Client):
         Other loop*() functions are available that give a threaded interface
         and a manual interface.
         """
-        self.running = True
         self.listen(self.input_topics)
+
         logging.info('Getting into the listening loop')
+        self.running = True
         while self.running:
             self.loop()
 
+    @ensure_connection
     def listen(self, topics):
         """
         Subscribe to a list of channels
@@ -83,11 +75,11 @@ class Receiver(mqtt.Client):
         """
         logging.debug(f'Listen to {list(map(lambda x: x.name, topics))}')
 
-        for topic in map(lambda x: x.topic, topics):
+        for topic in map(lambda x: x.name, topics):
             try:
                 self.subscribe(topic)
                 logging.debug(f'Subscribed the {topic} topic')
-            except:
+            except Exception:
                 logging.debug(f"Can't subscribe the {topic} topic")
 
     def stop(self):

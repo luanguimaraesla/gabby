@@ -2,14 +2,17 @@
 Gabby module witch creates the Gabby class to handle creation of
 message queue nodes for intercommunication
 """
+import logging
 from collections import namedtuple
 
-from .mqtt.transmitter import Transmitter
-from .mqtt.receiver import Receiver
-from .messager.decoder import decode
-from .messager.message import Message
+from .transmitter import Transmitter
+from .receiver import Receiver
+from .decoder import decode
+from .message import Message
 
-Topic = namedtuple('Topic', ['name', 'topic', 'fmt'])
+
+Topic = namedtuple('Topic', ['name', 'fmt'])
+
 
 class Gabby(Transmitter, Receiver):
     def __init__(self, input_topics, output_topics, decode_input=True,
@@ -31,10 +34,16 @@ class Gabby(Transmitter, Receiver):
     def process(self, userdata, message):
         if self.decode_input:
             topic_name = message.topic
-            topics = filter(lambda x: x.name == topic_name, self.input_topics)
+            topics = list(
+                filter(
+                    lambda x: x.name == topic_name,
+                    self.input_topics
+                )
+            )
             message = decode(message, topics)
 
-        response_messages = self.process(message)
+        logging.debug(f'Processing message: {message}')
+        response_messages = self.transform(message)
         for msg in response_messages:
             self.send(msg)
 
