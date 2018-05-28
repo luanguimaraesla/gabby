@@ -4,20 +4,21 @@
 
 # Python Gabby
 
-A simple controller for message queue pipelines
+A simple controller for message queue pipelines using Mosquitto
 
-### Installing
+## Installing
+
+You can install the package through pip
 
 ```bash
 pip install gabby
 ```
 
-### Examples
-
-#### Receiving messages
+## Examples
 
 Before run examples, please initialize the Mosquitto server.
 
+#### Receiving messages
 
 ```python
 from gabby.gabby import Gabby, Topic
@@ -36,9 +37,9 @@ if __name__ == "__main__":
     topic_A = Topic('queue/a', 'i')
     topic_B = Topic('queue/b', 'i')
 
-    logger_gabby = PrinterGabby([topic_A], [topic_B])
+    printer_gabby = PrinterGabby([topic_A], [topic_B])
 
-    controller.add_gabby(logger_gabby)
+    controller.add_gabby(printer_gabby)
     controller.run()
 ```
 
@@ -50,7 +51,10 @@ from gabby.message import Message
 
 
 if __name__ == "__main__":
-    g = Gabby([Topic('queue/b', 'i')], [Topic('queue/a', 'i')])
+    topic_A = Topic('queue/a', 'i')
+    topic_B = Topic('queue/b', 'i')
+
+    g = Gabby([topic_B], [topic_A])
     data = (1,)
     g.send(Message(data, g.output_topics))
 
