@@ -3,3 +3,4 @@ from .message import Message
 from .controller import Controller
 
 name = 'gabby'
+__version__ = '0.0.3'
