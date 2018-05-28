@@ -1,3 +1,7 @@
+<a href="https://codeclimate.com/github/luanguimaraesla/gabby/maintainability">
+  <img src="https://api.codeclimate.com/v1/badges/dc94cbf3854b542d3862/maintainability" />
+</a>
+
 # Python Gabby
 
 A simple controller for message queue pipelines

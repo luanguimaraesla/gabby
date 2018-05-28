@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import io
-import re
 from glob import glob
 from os.path import basename
 from os.path import dirname
@@ -24,7 +23,7 @@ def read(*names, **kwargs):
 
 setup(
     name='gabby',
-    version='0.0.1',
+    version='0.0.2',
     description='A simple controller for message queue pipelines',
     url='http://github.com/luanguimaraesla/gabby',
     author='Luan Guimarães Lacerda',
