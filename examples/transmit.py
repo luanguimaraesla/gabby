@@ -1,6 +1,5 @@
 import logging
-from src.gabby.gabby import Gabby, Topic
-from src.gabby.message import Message
+from gabby import Gabby, Topic, Message
 
 
 def setup_logging(level):

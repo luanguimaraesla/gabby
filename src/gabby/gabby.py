@@ -7,7 +7,6 @@ from collections import namedtuple
 
 from .transmitter import Transmitter
 from .receiver import Receiver
-from .decoder import decode
 from .message import Message
 
 
@@ -40,7 +39,7 @@ class Gabby(Transmitter, Receiver):
                     self.input_topics
                 )
             )
-            message = decode(message, topics)
+            message = Message.decode(message.payload, topics)
 
         logging.debug(f'Processing message: {message}')
         response_messages = self.transform(message)

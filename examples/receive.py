@@ -1,6 +1,5 @@
 import logging
-from src.gabby.gabby import Gabby, Topic
-from src.gabby.controller import Controller
+from gabby import Gabby, Topic, Controller
 
 
 class LoggerGabby(Gabby):

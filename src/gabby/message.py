@@ -17,7 +17,7 @@ class Message:
         self.fmt = topics[0].fmt if topics else fmt
 
         if self.fmt is None:
-            raise "You should setup the topic or the fmt"
+            raise ValueError("You should setup the topic or the fmt")
 
     @property
     def encoded(self):
@@ -31,3 +31,25 @@ class Message:
             return filter(lambda x: x.fmt == self.fmt, topics)
         else:
             return filter(lambda x: x in self.topics, topics)
+
+    @staticmethod
+    def decode(message, topics=[], fmt=None):
+        """
+        Convert an MQTTMessage to a Message
+
+        Args:
+            message (MQTTMessage):
+                A paho.mqtt.MQTTMessage received from any message queue
+
+            topics (collection):
+                list of topics to extract fmt of the first topic
+
+            fmt (str):
+                struct model of encoded message
+        """
+        if fmt or topics:
+            data = struct.unpack(topics[0].fmt if topics else fmt, message)
+            logging.debug(f'Decoded data: {data}')
+            return Message(data, topics=topics, fmt=fmt)
+        else:
+            raise ValueError("You should setup the topic or the fmt")
