@@ -8,7 +8,8 @@ import struct
 
 class Message:
     """
-    Handler for struct encoding data
+    Handler for creating complex data structs to transmit and process
+    through the MQTT pipelines
     """
     def __init__(self, data, topics=[], fmt=None):
         logging.debug(f'Creating a new message with this data: {data}')
@@ -21,12 +22,23 @@ class Message:
 
     @property
     def encoded(self):
+        """
+        Converts the data attribute to a complex bytestring to send
+        through the MQTT broker.
+        """
         return struct.pack(self.fmt, *self.data)
 
     def __str__(self):
         return str(self.data)
 
     def filter_topics(self, topics):
+        """
+        It filters topics that match the same format of the message.
+
+        Args:
+            topics (collection):
+                list of topics to filter matches
+        """
         if not self.topics:
             return filter(lambda x: x.fmt == self.fmt, topics)
         else:
