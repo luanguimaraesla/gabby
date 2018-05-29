@@ -3,10 +3,13 @@
     <img src="https://api.codeclimate.com/v1/badges/dc94cbf3854b542d3862/maintainability" />
 </a>
 <a href="https://travis-ci.org/luanguimaraesla/gabby">
- <img src="https://travis-ci.org/luanguimaraesla/gabby.svg?branch=master" />
+    <img src="https://travis-ci.org/luanguimaraesla/gabby.svg?branch=master" />
 </a>
 <a href="https://badge.fury.io/py/gabby">
-  <img src="https://badge.fury.io/py/gabby.svg" />
+    <img src="https://badge.fury.io/py/gabby.svg" />
+</a>
+<a href="https://codecov.io/gh/codecov/example-python">
+    <img src="https://codecov.io/gh/luanguimaraesla/gabby/branch/master/graph/badge.svg" />
 </a>
 
 
