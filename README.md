@@ -1,6 +1,8 @@
 <a href="https://codeclimate.com/github/luanguimaraesla/gabby/maintainability">
   <img src="https://api.codeclimate.com/v1/badges/dc94cbf3854b542d3862/maintainability" />
 </a>
+[![Build Status](https://travis-ci.org/luanguimaraesla/gabby.svg?branch=master)](https://travis-ci.org/luanguimaraesla/gabby)
+[![PyPI version](https://badge.fury.io/py/gabby.svg)](https://badge.fury.io/py/gabby)
 
 # Python Gabby
 

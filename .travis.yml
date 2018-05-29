@@ -2,5 +2,15 @@ sudo: false
 language: python
 python:
   - "3.6"
-install: pip install tox-travis
-script: tox
+
+# Package installation
+install:
+  - pip install tox-travis codecov
+
+# Run tests
+script:
+  tox
+
+# Register code coverage in coveralls
+after_success:
+  codecov
