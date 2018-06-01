@@ -44,6 +44,12 @@ class Message:
         else:
             return filter(lambda x: x in self.topics, topics)
 
+    def belongs_to(self, alias):
+        """
+        Check if an alias matches to any self.topics alias
+        """
+        return list(filter(lambda x: x.alias == alias, self.topics)) != []
+
     @staticmethod
     def decode(message, topics=[], fmt=None):
         """

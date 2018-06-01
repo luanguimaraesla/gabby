@@ -33,6 +33,10 @@ class TestMessage:
         assert new_msg.data == (1,)
 
     def test_should_filter_topics_with_the_same_fmt(self):
-        tpcs = [Topic(name, fmt) for name, fmt in zip(['a', 'b'], ['i', 'f'])]
+        tpcs = [Topic(n, n, f) for n, f in zip(['a', 'b'], ['i', 'f'])]
         msg = Message((1,), fmt='i')
         assert list(msg.filter_topics(tpcs)) == tpcs[0:1]
+
+    def test_message_belongs_to(self, topic):
+        msg = Message((1,), topics=[topic])
+        assert msg.belongs_to(topic.alias)

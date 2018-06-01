@@ -10,7 +10,7 @@ from .receiver import Receiver
 from .message import Message
 
 
-Topic = namedtuple('Topic', ['name', 'fmt'])
+Topic = namedtuple('Topic', ['alias', 'name', 'fmt'])
 
 
 class Gabby(Transmitter, Receiver):
