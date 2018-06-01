@@ -3,6 +3,7 @@ import paho.mqtt.client as mqtt
 
 from .message import Message
 from .decorators import ensure_connection
+from .topic import TopicCollection
 
 
 class Transmitter(mqtt.Client):
@@ -14,8 +15,8 @@ class Transmitter(mqtt.Client):
             keys identify the topic,s for the mqtt topic
             names to publish
     """
-    def __init__(self, topics, url=None, port=None, keepalive=None):
-        self.output_topics = topics
+    def __init__(self, topics=[], url=None, port=None, keepalive=None):
+        self.output_topics = TopicCollection(topics)
         self.url = url
         self.port = port
         self.keepalive = keepalive

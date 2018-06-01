@@ -3,14 +3,10 @@ Gabby module witch creates the Gabby class to handle creation of
 message queue nodes for intercommunication
 """
 import logging
-from collections import namedtuple
 
 from .transmitter import Transmitter
 from .receiver import Receiver
 from .message import Message
-
-
-Topic = namedtuple('Topic', ['alias', 'name', 'fmt'])
 
 
 class Gabby(Transmitter, Receiver):

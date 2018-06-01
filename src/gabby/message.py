@@ -5,6 +5,8 @@ Module to handle message serialization
 import logging
 import struct
 
+from .topic import TopicCollection
+
 
 class Message:
     """
@@ -14,7 +16,7 @@ class Message:
     def __init__(self, data, topics=[], fmt=None):
         logging.debug(f'Creating a new message with this data: {data}')
         self.data = data
-        self.topics = topics
+        self.topics = TopicCollection(topics)
         self.fmt = topics[0].fmt if topics else fmt
 
         if self.fmt is None:
@@ -44,11 +46,11 @@ class Message:
         else:
             return filter(lambda x: x in self.topics, topics)
 
-    def belongs_to(self, alias):
+    def belongs_to(self, name):
         """
-        Check if an alias matches to any self.topics alias
+        Check if an name matches to any self.topics name
         """
-        return list(filter(lambda x: x.alias == alias, self.topics)) != []
+        return self.topics.find_by(name=name) is not None
 
     @staticmethod
     def decode(message, topics=[], fmt=None):
