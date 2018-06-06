@@ -10,7 +10,7 @@ from .message import Message
 
 
 class Gabby(Transmitter, Receiver):
-    def __init__(self, input_topics, output_topics, decode_input=True,
+    def __init__(self, input_topics=None, output_topics=None, decode_input=True,
                  url=None, port=None, keepalive=None):
         """
         Processor initializer
@@ -22,8 +22,8 @@ class Gabby(Transmitter, Receiver):
             decoder (bool), default=True:
                 enable auto encoding/decoding of any received message
         """
-        Receiver.__init__(self, input_topics, url, port, keepalive)
-        Transmitter.__init__(self, output_topics, url, port, keepalive)
+        Receiver.__init__(self, input_topics or [], url, port, keepalive)
+        Transmitter.__init__(self, output_topics or [], url, port, keepalive)
         self.decode_input = decode_input
 
     def process(self, userdata, message):
