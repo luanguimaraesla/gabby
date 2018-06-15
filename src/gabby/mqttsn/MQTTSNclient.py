@@ -18,267 +18,213 @@
 
 import MQTTSN
 import socket
-import time
 import MQTTSNinternal
 import thread
 import types
-import sys
 import struct
+import logging
+
+log = logging.getLogger("mqttsn")
 
 
 class Callback:
+    def __init__(self):
+        self.events = []
+        self.registered = {}
 
-  def __init__(self):
-    self.events = []
-    self.registered = {}
+    def connection_lost(self, cause):
+        log.warning(f'Connection Lost: {cause}')
+        self.events.append("Disconnected")
 
-  def connectionLost(self, cause):
-    print "default connectionLost", cause
-    self.events.append("disconnected")
+    def message_arrived(self, topic_name, payload, qos, retained, msgid):
+        log.debug(
+            f'Publish Arrived: {topic_name}, {payload}, '
+            f'{qos}, {retained}, {msgid}'
+        )
+        return True
 
-  def messageArrived(self, topicName, payload, qos, retained, msgid):
-    print "default publishArrived", topicName, payload, qos, retained, msgid
-    return True
+    def delivery_complete(self, msgid):
+        log.debug(f'Delivery Complete')
 
-  def deliveryComplete(self, msgid):
-    print "default deliveryComplete"
+    def advertise(self, address, gwid, duration):
+        log.debug(f'Advertise: {address}, {gwid}, {duration}')
 
-  def advertise(self, address, gwid, duration):
-    print "advertise", address, gwid, duration
-
-  def register(self, topicid, topicName):
-    self.registered[topicId] = topicName
+    def register(self, topic_id, topic_name):
+        self.registered[topic_id] = topic_name
 
 
 class Client:
+    def __init__(self, client_id, host="localhost", port=1883):
+        self.client_id = client_id
+        self.host = host
+        self.port = port
+        self.msgid = 1
+        self.callback = None
+        self.__receiver = None
 
-  def __init__(self, clientid, host="localhost", port=1883):
-    self.clientid = clientid
-    self.host = host
-    self.port = port
-    self.msgid = 1
-    self.callback = None
-    self.__receiver = None
+    def start(self):
+        self.sock = socket.socket(
+            socket.AF_INET,
+            socket.SOCK_DGRAM,
+            socket.IPPROTO_UDP
+        )
 
-  def start(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.sock.bind((self.host, self.port))
-    mreq = struct.pack("4sl", socket.inet_aton(self.host), socket.INADDR_ANY)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind((self.host, self.port))
+        mreq = struct.pack("4sl", socket.inet_aton(self.host), socket.INADDR_ANY)
 
-    self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-    self.startReceiver()
+        self.start_receiver()
 
-  def stop(self):
-    self.stopReceiver()
+    def stop(self):
+        self.stop_receiver()
 
-  def __nextMsgid(self):
-    def getWrappedMsgid():
-      id = self.msgid + 1
-      if id == 65535:
-        id = 1
-      return id
+    def __next_msg_id(self):
+        def get_wrapped_msg_id():
+            id = self.msg_id + 1
+            if id == 65535:
+                id = 1
+            return id
 
-    if len(self.__receiver.outMsgs) >= 65535:
-      raise "No slots left!!"
-    else:
-      self.msgid = getWrappedMsgid()
-      while self.__receiver.outMsgs.has_key(self.msgid):
-        self.msgid = getWrappedMsgid()
-    return self.msgid
+        if len(self.__receiver.out_msgs) >= 65535:
+            raise "No slots left!!"
+        else:
+            self.msgid = get_wrapped_msg_id()
+            while self.msg_id in self.__receiver.out_msgs:
+                self.msg_id = get_wrapped_msg_id()
+        return self.msg_id
 
+    def register_callback(self, callback):
+        self.callback = callback
 
-  def registerCallback(self, callback):
-    self.callback = callback
+    def connect(self, cleansession=True):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # self.sock.settimeout(5.0)
 
+        self.sock.connect((self.host, self.port))
 
-  def connect(self, cleansession=True):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #self.sock.settimeout(5.0)
+        connect = MQTTSN.Connects()
+        connect.ClientId = self.client_id
+        connect.CleanSession = cleansession
+        connect.KeepAliveTimer = 0
+        self.sock.send(connect.pack())
 
-    self.sock.connect((self.host, self.port))
+        response, address = MQTTSN.unpackPacket(MQTTSN.getPacket(self.sock))
+        assert response.mh.MsgType == MQTTSN.CONNACK
 
-    connect = MQTTSN.Connects()
-    connect.ClientId = self.clientid
-    connect.CleanSession = cleansession
-    connect.KeepAliveTimer = 0
-    self.sock.send(connect.pack())
+        self.start_receiver()
 
-    response, address = MQTTSN.unpackPacket(MQTTSN.getPacket(self.sock))
-    assert response.mh.MsgType == MQTTSN.CONNACK
+    def start_receiver(self):
+        self.__receiver = MQTTSNinternal.Receivers(self.sock)
+        if self.callback:
+            thread.start_new_thread(self.__receiver, (self.callback,))
 
-    self.startReceiver()
+    def waitfor(self, msg_type, msg_id=None):
+        if self.__receiver:
+            msg = self.__receiver.waitfor(msg_type, msg_id)
+        else:
+            msg = self.__receiver.receive()
+            while (msg.mh.msg_type != msg_type and
+                    (msg_id is None or msg_id == msg.msg_id)):
+                msg = self.__receiver.receive()
+        return msg
 
+    def subscribe(self, topic, qos=2):
+        subscribe = MQTTSN.Subscribes()
+        subscribe.msg_id = self.__next_msg_id()
 
-  def startReceiver(self):
-    self.__receiver = MQTTSNinternal.Receivers(self.sock)
-    if self.callback:
-      id = thread.start_new_thread(self.__receiver, (self.callback,))
+        if isinstance(topic, types.StringType):
+            subscribe.topic_name = topic
+            if len(topic) > 2:
+                subscribe.flags.topic_id_type = MQTTSN.TOPIC_NORMAL
+            else:
+                subscribe.flags.topic_id_type = MQTTSN.TOPIC_SHORTNAME
+        else:
+            subscribe.topic_id = topic  # should be int
+            subscribe.flags.topic_id_type = MQTTSN.TOPIC_PREDEFINED
 
+        subscribe.flags.qos = qos
+        if self.__receiver:
+            self.__receiver.lookfor(MQTTSN.SUBACK)
+        self.sock.send(subscribe.pack())
+        msg = self.waitfor(MQTTSN.SUBACK, subscribe.msg_id)
 
-  def waitfor(self, msgType, msgId=None):
-    if self.__receiver:
-      msg = self.__receiver.waitfor(msgType, msgId)
-    else:
-      msg = self.__receiver.receive()
-      while msg.mh.MsgType != msgType and (msgId == None or msgId == msg.MsgId):
-        msg = self.__receiver.receive()
-    return msg
+        return msg.return_code, msg.topic_id
 
+    def unsubscribe(self, topics):
+        unsubscribe = MQTTSN.Unsubscribes()
+        unsubscribe.msg_id = self.__next_msg_id()
+        unsubscribe.data = topics
+        if self.__receiver:
+            self.__receiver.lookfor(MQTTSN.UNSUBACK)
+        self.sock.send(unsubscribe.pack())
+        self.waitfor(MQTTSN.UNSUBACK, unsubscribe.msg_id)
 
-  def subscribe(self, topic, qos=2):
-    subscribe = MQTTSN.Subscribes()
-    subscribe.MsgId = self.__nextMsgid()
-    if type(topic) == types.StringType:
-      subscribe.TopicName = topic
-      if len(topic) > 2:
-        subscribe.Flags.TopicIdType = MQTTSN.TOPIC_NORMAL
-      else:
-        subscribe.Flags.TopicIdType = MQTTSN.TOPIC_SHORTNAME
-    else:
-      subscribe.TopicId = topic # should be int
-      subscribe.Flags.TopicIdType = MQTTSN.TOPIC_PREDEFINED
-    subscribe.Flags.QoS = qos
-    if self.__receiver:
-      self.__receiver.lookfor(MQTTSN.SUBACK)
-    self.sock.send(subscribe.pack())
-    msg = self.waitfor(MQTTSN.SUBACK, subscribe.MsgId)
-    return msg.ReturnCode, msg.TopicId
+    def register(self, topic_name):
+        register = MQTTSN.Registers()
+        register.topic_name = topic_name
+        if self.__receiver:
+            self.__receiver.lookfor(MQTTSN.REGACK)
+        self.sock.send(register.pack())
+        msg = self.waitfor(MQTTSN.REGACK, register.msg_id)
+        return msg.topic_id
 
+    def publish(self, topic, payload, qos=0, retained=False):
+        publish = MQTTSN.Publishes()
+        publish.flags.qos = qos
+        publish.flags.retain = retained
+        if isinstance(topic, types.StringType):
+            publish.flags.topic_id_type = MQTTSN.TOPIC_SHORTNAME
+            publish.topic_name = topic
+        else:
+            publish.flags.topic_id_type = MQTTSN.TOPIC_NORMAL
+            publish.topic_id = topic
+        if qos in [-1, 0]:
+            publish.msg_id = 0
+        else:
+            publish.msg_id = self.__next_msg_id()
+            log.debug(f'Message ID: {publish.msg_id}')
+            self.__receiver.outMsgs[publish.msg_id] = publish
+        publish.Data = payload
+        self.sock.send(publish.pack())
+        return publish.msd_id
 
-  def unsubscribe(self, topics):
-    unsubscribe = MQTTSN.Unsubscribes()
-    unsubscribe.MsgId = self.__nextMsgid()
-    unsubscribe.data = topics
-    if self.__receiver:
-      self.__receiver.lookfor(MQTTSN.UNSUBACK)
-    self.sock.send(unsubscribe.pack())
-    msg = self.waitfor(MQTTSN.UNSUBACK, unsubscribe.MsgId)
+    def disconnect(self):
+        disconnect = MQTTSN.Disconnects()
+        if self.__receiver:
+            self.__receiver.lookfor(MQTTSN.DISCONNECT)
+        self.sock.send(disconnect.pack())
+        self.waitfor(MQTTSN.DISCONNECT)
 
+    def stop_receiver(self):
+        self.sock.close()  # this will stop the receiver too
+        assert self.__receiver.in_msgs == {}
+        assert self.__receiver.out_msgs == {}
+        self.__receiver = None
 
-  def register(self, topicName):
-    register = MQTTSN.Registers()
-    register.TopicName = topicName
-    if self.__receiver:
-      self.__receiver.lookfor(MQTTSN.REGACK)
-    self.sock.send(register.pack())
-    msg = self.waitfor(MQTTSN.REGACK, register.MsgId)
-    return msg.TopicId
-
-
-  def publish(self, topic, payload, qos=0, retained=False):
-    publish = MQTTSN.Publishes()
-    publish.Flags.QoS = qos
-    publish.Flags.Retain = retained
-    if type(topic) == types.StringType:
-      publish.Flags.TopicIdType = MQTTSN.TOPIC_SHORTNAME
-      publish.TopicName = topic
-    else:
-      publish.Flags.TopicIdType = MQTTSN.TOPIC_NORMAL
-      publish.TopicId = topic
-    if qos in [-1, 0]:
-      publish.MsgId = 0
-    else:
-      publish.MsgId = self.__nextMsgid()
-      print "MsgId", publish.MsgId
-      self.__receiver.outMsgs[publish.MsgId] = publish
-    publish.Data = payload
-    self.sock.send(publish.pack())
-    return publish.MsgId
-
-
-  def disconnect(self):
-    disconnect = MQTTSN.Disconnects()
-    if self.__receiver:
-      self.__receiver.lookfor(MQTTSN.DISCONNECT)
-    self.sock.send(disconnect.pack())
-    msg = self.waitfor(MQTTSN.DISCONNECT)
-
-
-  def stopReceiver(self):
-    self.sock.close() # this will stop the receiver too
-    assert self.__receiver.inMsgs == {}
-    assert self.__receiver.outMsgs == {}
-    self.__receiver = None
-
-  def receive(self):
-    return self.__receiver.receive()
+    def receive(self):
+        return self.__receiver.receive()
 
 
 def publish(topic, payload, retained=False, port=1883, host="localhost"):
-  publish = MQTTSN.Publishes()
-  publish.Flags.QoS = 3
-  publish.Flags.Retain = retained
-  if type(topic) == types.StringType:
-    if len(topic) > 2:
-      publish.Flags.TopicIdType = MQTTSN.TOPIC_NORMAL
-      publish.TopicId = len(topic)
-      payload = topic + payload
+    publish = MQTTSN.Publishes()
+    publish.flags.qos = 3
+    publish.flags.retain = retained
+    if isinstance(topic, types.StringType):
+        if len(topic) > 2:
+            publish.flags.topic_id_type = MQTTSN.TOPIC_NORMAL
+            publish.topic_id = len(topic)
+            payload = topic + payload
+        else:
+            publish.flags.topic_id_type = MQTTSN.TOPIC_SHORTNAME
+            publish.topic_name = topic
     else:
-      publish.Flags.TopicIdType = MQTTSN.TOPIC_SHORTNAME
-      publish.TopicName = topic
-  else:
-    publish.Flags.TopicIdType = MQTTSN.TOPIC_NORMAL
-    publish.TopicId = topic
-  publish.MsgId = 0
-  print "payload", payload
-  publish.Data = payload
-  sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  sock.sendto(publish.pack(), (host, port))
-  sock.close()
-  return
-
-
-if __name__ == "__main__":
-
-	"""
-  mclient = Client("myclientid", host="225.0.18.83", port=1883)
-  mclient.registerCallback(Callback())
-  mclient.start()
-
-  publish("long topic name", "qos -1 start", port=1884)
-
-  callback = Callback()
-
-  aclient = Client("myclientid", port=1884)
-  aclient.registerCallback(callback)
-
-  aclient.connect()
-  aclient.disconnect()
-
-  aclient.connect()
-  aclient.subscribe("k ", 2)
-  aclient.subscribe("jkjkjkjkj", 2)
-  aclient.publish("k ", "qos 0")
-  aclient.publish("k ", "qos 1", 1)
-  aclient.publish("jkjkjkjkj", "qos 2", 2)
-  topicid = aclient.register("jkjkjkjkj")
-  #time.sleep(1.0)
-  aclient.publish(topicid, "qos 2 - registered topic id", 2)
-  #time.sleep(1.0)
-  aclient.disconnect()
-  publish("long topic name", "qos -1 end", port=1884)
-
-  time.sleep(30)
-  mclient.stop()
-	"""
-
-
-	aclient = Client("linh", port=1883)
-	aclient.registerCallback(Callback())
-	aclient.connect()
-
-	rc, topic1 = aclient.subscribe("topic1")
-	print "topic id for topic1 is", topic1
-	rc, topic2 = aclient.subscribe("topic2")
-	print "topic id for topic2 is", topic2
-	aclient.publish(topic1, "aaaa", qos=0)
-	aclient.publish(topic2, "bbbb", qos=0)
-	aclient.unsubscribe("topic1")
-	aclient.publish(topic2, "bbbb", qos=0)
-	aclient.publish(topic1, "aaaa", qos=0)
-	aclient.disconnect()
-
-
-
+        publish.flags.topic_id_type = MQTTSN.TOPIC_NORMAL
+        publish.topic_id = topic
+    publish.msg_id = 0
+    log.debug(f'payload {payload}')
+    publish.Data = payload
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(publish.pack(), (host, port))
+    sock.close()
