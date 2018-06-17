@@ -4,10 +4,14 @@ Tools to encapsulate generic receive connectors
 import logging
 import time
 import mqttsn.client as mqttsn
+from collections import namedtuple
 
 from .topic import TopicCollection
 from .settings import UDP_URL, UDP_PORT
 from .decorators import ensure_udp_connection
+
+
+UDPMessage = namedtuple('UDPMessage', ['payload', 'topic', 'qos'])
 
 
 class UDPReceiver(mqttsn.Client, mqttsn.Callback):
@@ -25,7 +29,9 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
             mqttsn server port
     """
     def __init__(self, topics=[], url=None, port=None):
-        super().__init__(host=url or UDP_URL, port=port or UDP_PORT)
+        mqttsn.Client.__init__(
+            self, host=(url or UDP_URL), port=(port or UDP_PORT)
+        )
         self.input_topics = TopicCollection(topics)
         self._hack_udp_callbacks()
 
@@ -35,7 +41,7 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
         """
         logging.warning(f'Received UDP message from {topic_name} topic')
         logging.warning(f'Message: {payload}')
-        self.process(topic_name, payload)
+        self.process(None, UDPMessage(payload, topic_name, qos))
         return True
 
     def _hack_udp_callbacks(self):
@@ -47,18 +53,12 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
         raise NotImplementedError
 
     @ensure_udp_connection
-    def run(self):
-        """
-        Blocking call that processes network traffic, dispatches callbacks and
-        handles reconnecting.
-        Other loop*() functions are available that give a threaded interface
-        and a manual interface.
-        """
+    def run(self, join=True):
         self.listen(self.input_topics.filter_by(transmission='udp'))
 
         logging.info('Getting into the listening loop')
         self.running = True
-        while self.running:
+        while self.running and join:
             time.sleep(1)
 
     @ensure_udp_connection

@@ -15,7 +15,9 @@ def ensure_connection(func):
             self.connected = False
         finally:
             if not self.connected:
-                self.connect(
+                from paho.mqtt.client import Client
+                Client.connect(
+                    self,
                     self.url or URL,
                     self.port or PORT,
                     self.keepalive or KEEPALIVE
@@ -31,12 +33,13 @@ def ensure_udp_connection(func):
     """
     def wrapper(self, *args, **kwargs):
         try:
-            getattr(self, "connected")
+            getattr(self, "udp_connected")
         except AttributeError:
-            self.connected = False
+            self.udp_connected = False
         finally:
-            if not self.connected:
-                self.connect()
-                self.connected = True
+            if not self.udp_connected:
+                from .udp_receiver import UDPReceiver
+                UDPReceiver.connect(self)
+                self.udp_connected = True
         return func(self, *args, **kwargs)
     return wrapper

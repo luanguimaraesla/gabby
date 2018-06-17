@@ -14,11 +14,10 @@ def setup_logging(level):
         level=getattr(logging, level.upper())
     )
 
+
 if __name__ == '__main__':
     setup_logging('debug')
 
     a = Topic('ab', 'f', 'udp')
     c = UDPTransmitter(topics=[a])
     c.send(Message((1.0,), topics=[a]))
-
-    b.run()

@@ -26,7 +26,7 @@ class Receiver(mqtt.Client):
             mqtt keepalive time in seconds
     """
     def __init__(self, topics=[], url=None, port=None, keepalive=None):
-        super().__init__()
+        mqtt.Client.__init__(self)
         self.input_topics = TopicCollection(topics)
         self.url = url
         self.port = port

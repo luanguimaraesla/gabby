@@ -19,7 +19,9 @@ class UDPTransmitter(mqttsn.Client):
             names to publish
     """
     def __init__(self, topics=[], url=None, port=None):
-        super().__init__(host=url or UDP_URL, port=port or UDP_PORT)
+        mqttsn.Client.__init__(
+            self, host=(url or UDP_URL), port=(port or UDP_PORT)
+        )
         self.output_topics = TopicCollection(topics)
 
     @ensure_udp_connection
