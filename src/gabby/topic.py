@@ -1,4 +1,6 @@
-from collections import namedtuple
+"""
+Topic module
+"""
 
 
 class Topic:
