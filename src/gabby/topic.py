@@ -1,7 +1,14 @@
 from collections import namedtuple
 
 
-Topic = namedtuple('Topic', ['name', 'fmt', 'protocol'])
+class Topic:
+    def __init__(self, name, fmt, transmission='tcp'):
+        self.name = name
+        self.fmt = fmt
+        if transmission in ['tcp', 'udp']:
+            self.transmission = transmission
+        else:
+            raise AttributeError('transmission attr should be "tcp" or "udp"')
 
 
 class TopicCollection(list):
@@ -36,7 +43,7 @@ class TopicCollection(list):
 
         Example:
             >>> TopicCollection(Topic('a', 'b', 'udp')).find_by(name='a')
-            ... Topic(name='a', fmt='b', protocol='udp')
+            ... Topic(name='a', fmt='b', transmission='udp')
         """
         match_topics = self.filter_by(**kwargs)
         return match_topics[0] if match_topics else None
@@ -47,7 +54,7 @@ class TopicCollection(list):
 
         Example:
             >>> TopicCollection(Topic('a', 'b', 'tcp')).filter_by(name='a')
-            ... [Topic(name='a', fmt='b', protocol='tcp')]
+            ... [Topic(name='a', fmt='b', transmission='tcp')]
         """
         return list(filter(
             lambda x: all([getattr(x, attr) == value
