@@ -23,3 +23,20 @@ def ensure_connection(func):
                 self.connected = True
         return func(self, *args, **kwargs)
     return wrapper
+
+
+def ensure_udp_connection(func):
+    """
+    Decorator to ensure UDP connection before execute any decorated method
+    """
+    def wrapper(self, *args, **kwargs):
+        try:
+            getattr(self, "connected")
+        except AttributeError:
+            self.connected = False
+        finally:
+            if not self.connected:
+                self.connect()
+                self.connected = True
+        return func(self, *args, **kwargs)
+    return wrapper
