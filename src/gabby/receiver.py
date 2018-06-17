@@ -58,7 +58,7 @@ class Receiver(mqtt.Client):
         Other loop*() functions are available that give a threaded interface
         and a manual interface.
         """
-        self.listen(self.input_topics)
+        self.listen(self.input_topics.filter_by(transmission='tcp'))
 
         logging.info('Getting into the listening loop')
         self.running = True

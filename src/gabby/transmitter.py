@@ -49,7 +49,9 @@ class Transmitter(mqtt.Client):
         """
         receivers = []
         if isinstance(message, Message):
-            receivers = message.filter_topics(self.output_topics)
+            receivers = message.filter_topics(
+                self.output_topics.filter_by(transmission='tcp')
+            )
 
         logging.debug(f"Sending message to {receivers}")
 
