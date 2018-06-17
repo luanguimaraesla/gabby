@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 
-Topic = namedtuple('Topic', ['name', 'fmt'])
+Topic = namedtuple('Topic', ['name', 'fmt', 'protocol'])
 
 
 class TopicCollection(list):
@@ -35,8 +35,8 @@ class TopicCollection(list):
             First that matches
 
         Example:
-            >>> TopicCollection(Topic('a', 'b')).find_by(name='a')
-            ... Topic(name='a', fmt='b')
+            >>> TopicCollection(Topic('a', 'b', 'udp')).find_by(name='a')
+            ... Topic(name='a', fmt='b', protocol='udp')
         """
         match_topics = self.filter_by(**kwargs)
         return match_topics[0] if match_topics else None
@@ -46,8 +46,8 @@ class TopicCollection(list):
         Filter by any topic attribute
 
         Example:
-            >>> TopicCollection(Topic('a', 'b')).filter_by(name='a')
-            ... [Topic(name='a', fmt='b')]
+            >>> TopicCollection(Topic('a', 'b', 'tcp')).filter_by(name='a')
+            ... [Topic(name='a', fmt='b', protocol='tcp')]
         """
         return list(filter(
             lambda x: all([getattr(x, attr) == value
