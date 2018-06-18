@@ -1,3 +1,4 @@
+import time
 import logging
 from gabby import Gabby, Topic, Message
 
@@ -18,9 +19,10 @@ if __name__ == "__main__":
     topics = [
         Topic('qa', 'i', 'udp'),
         Topic('qb', 'i', 'udp'),
-        Topic('wa', 'i', 'tcp'),
-        Topic('wb', 'i', 'tcp'),
+        Topic('queue/a', 'i', 'tcp'),
+        Topic('queue/b', 'i', 'tcp'),
     ]
 
     g = Gabby(output_topics=topics, transmission=['tcp'])
     g.send(Message((1,), g.output_topics))
+    time.sleep(0.5)

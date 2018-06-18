@@ -1,6 +1,7 @@
 import pytest
 import struct
 from gabby import Message, Topic
+from gabby.topic import TopicCollection
 
 
 class TestMessage:
@@ -33,7 +34,9 @@ class TestMessage:
         assert new_msg.data == (1,)
 
     def test_should_filter_topics_with_the_same_fmt(self):
-        tpcs = [Topic(n, f) for n, f in zip(['a', 'b'], ['i', 'f'])]
+        tpcs = TopicCollection(
+            [Topic(n, f) for n, f in zip(['a', 'b'], ['i', 'f'])]
+        )
         msg = Message((1,), fmt='i')
         assert list(msg.filter_topics(tpcs)) == tpcs[0:1]
 

@@ -23,8 +23,8 @@ if __name__ == "__main__":
 
     topic_A = Topic('qa', 'i', 'udp')
     topic_B = Topic('qb', 'i', 'udp')
-    topic_C = Topic('wa', 'i', 'tcp')
-    topic_D = Topic('wb', 'i', 'tcp')
+    topic_C = Topic('queue/a', 'i', 'tcp')
+    topic_D = Topic('queue/b', 'i', 'tcp')
 
     logger_gabby = LoggerGabby(
         [topic_A, topic_B, topic_C, topic_D],
