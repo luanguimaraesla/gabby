@@ -3,7 +3,6 @@ from mqttsn import client as mqttsn
 
 from .message import Message
 from .decorators import ensure_udp_connection
-from .topic import TopicCollection
 from .settings import UDP_URL, UDP_PORT
 
 log = logging.getLogger('udptransmitter')
@@ -18,11 +17,11 @@ class UDPTransmitter(mqttsn.Client):
             keys identify the topic,s for the mqtt topic
             names to publish
     """
-    def __init__(self, topics=[], url=None, port=None):
+    def __init__(self, topics, url=None, port=None):
         mqttsn.Client.__init__(
             self, host=(url or UDP_URL), port=(port or UDP_PORT)
         )
-        self.output_topics = TopicCollection(topics)
+        self.output_topics = topics
 
     @ensure_udp_connection
     def send(self, message):

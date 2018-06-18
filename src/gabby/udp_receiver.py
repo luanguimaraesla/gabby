@@ -6,7 +6,6 @@ import time
 import mqttsn.client as mqttsn
 from collections import namedtuple
 
-from .topic import TopicCollection
 from .settings import UDP_URL, UDP_PORT
 from .decorators import ensure_udp_connection
 
@@ -29,11 +28,11 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
         port (int):
             mqttsn server port
     """
-    def __init__(self, topics=[], url=None, port=None):
+    def __init__(self, topics, url=None, port=None):
         mqttsn.Client.__init__(
             self, host=(url or UDP_URL), port=(port or UDP_PORT)
         )
-        self.input_topics = TopicCollection(topics)
+        self.input_topics = topics
         self._hack_udp_callbacks()
 
     def message_arrived(self, topic_name, payload, qos, retained, msg_id):

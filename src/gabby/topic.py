@@ -58,7 +58,7 @@ class TopicCollection(list):
             >>> TopicCollection(Topic('a', 'b', 'tcp')).filter_by(name='a')
             ... [Topic(name='a', fmt='b', transmission='tcp')]
         """
-        return list(filter(
+        return TopicCollection(filter(
             lambda x: all([getattr(x, attr) == value
                            for attr, value in kwargs.items()]), self
         ))

@@ -5,7 +5,6 @@ import logging
 import paho.mqtt.client as mqtt
 
 from .decorators import ensure_connection
-from .topic import TopicCollection
 
 
 class Receiver(mqtt.Client):
@@ -25,9 +24,9 @@ class Receiver(mqtt.Client):
         keepalive (int):
             mqtt keepalive time in seconds
     """
-    def __init__(self, topics=[], url=None, port=None, keepalive=None):
+    def __init__(self, topics, url=None, port=None, keepalive=None):
         mqtt.Client.__init__(self)
-        self.input_topics = TopicCollection(topics)
+        self.input_topics = topics
         self.url = url
         self.port = port
         self.keepalive = keepalive
@@ -48,7 +47,7 @@ class Receiver(mqtt.Client):
         logging.debug(f"Message arrived from {message.topic}")
         self.process(userdata, message)
 
-    def process(self, userdata, message):
+    def process(self, userdata, message, bind=None):
         raise NotImplementedError
 
     def run(self):

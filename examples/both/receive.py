@@ -3,7 +3,7 @@ from gabby import Gabby, Topic, Controller
 
 
 class LoggerGabby(Gabby):
-    def transform(self, message):
+    def transform(self, client, message):
         logging.debug(f"ARRIVED! Data: {message.data}")
 
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     logger_gabby = LoggerGabby(
         [topic_A, topic_B, topic_C, topic_D],
-        transmission=['udp']
+        transmission=['udp', 'tcp']
     )
 
     controller.add_gabby(logger_gabby)

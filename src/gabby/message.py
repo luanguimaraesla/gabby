@@ -42,9 +42,9 @@ class Message:
                 list of topics to filter matches
         """
         if not self.topics:
-            return filter(lambda x: x.fmt == self.fmt, topics)
+            return topics.filter_by(fmt=self.fmt)
         else:
-            return filter(lambda x: x in self.topics, topics)
+            return TopicCollection(filter(lambda x: x in self.topics, topics))
 
     def belongs_to(self, name):
         """
