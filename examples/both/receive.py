@@ -22,15 +22,13 @@ if __name__ == "__main__":
     controller = Controller()
 
     topic_A = Topic('qa', 'i', 'udp')
-    topic_F = Topic('qb', 'i', 'udp')
-    topic_B = Topic('queue/1', 'i', 'tcp')
-    topic_C = Topic('queue/a', 'i', 'tcp')
-    topic_D = Topic('queue/b', 'i', 'tcp')
-    topic_E = Topic('queue/c', 'i', 'tcp')
+    topic_B = Topic('qb', 'i', 'udp')
+    topic_C = Topic('wa', 'i', 'tcp')
+    topic_D = Topic('wb', 'i', 'tcp')
 
     logger_gabby = LoggerGabby(
-        [topic_A, topic_F, topic_B, topic_C, topic_D, topic_E],
-        transmission=['tcp', 'udp']
+        [topic_A, topic_B, topic_C, topic_D],
+        transmission=['udp']
     )
 
     controller.add_gabby(logger_gabby)

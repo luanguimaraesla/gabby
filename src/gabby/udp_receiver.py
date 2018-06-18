@@ -11,6 +11,7 @@ from .settings import UDP_URL, UDP_PORT
 from .decorators import ensure_udp_connection
 
 
+log = logging.getLogger('udpreceiver')
 UDPMessage = namedtuple('UDPMessage', ['payload', 'topic', 'qos'])
 
 
@@ -39,8 +40,8 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
         """
         Callback to receive messsages
         """
-        logging.warning(f'Received UDP message from {topic_name} topic')
-        logging.warning(f'Message: {payload}')
+        log.debug(f'Received UDP message from {topic_name} topic')
+        log.debug(f'Message: {payload}')
         self.process(None, UDPMessage(payload, topic_name, qos))
         return True
 
@@ -54,7 +55,9 @@ class UDPReceiver(mqttsn.Client, mqttsn.Callback):
 
     @ensure_udp_connection
     def run(self, join=True):
-        self.listen(self.input_topics.filter_by(transmission='udp'))
+        UDPReceiver.listen(
+            self, self.input_topics.filter_by(transmission='udp')
+        )
 
         logging.info('Getting into the listening loop')
         self.running = True
